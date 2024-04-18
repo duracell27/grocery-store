@@ -40,13 +40,31 @@ const addToCart = (data, jwt) =>
 
 const getCartItems = (userId, jwt) =>
   axiosConfig
-    .get(`/user-carts?filters[userId][$eq]=${userId}&populate=*`, {
+    .get(`/user-carts?filters[userId][$eq]=${userId}&[populate][products][populate][images][populate][0]=url`, {
       headers: {
         Authorization: "Bearer " + jwt,
       },
     })
-    .then((resp) => resp.data.data);
-    
+    .then((resp) => {
+      const data = resp.data.data;
+      const cartItemList = data.map((item,index)=>({
+        name: item.attributes.products?.data[0].attributes.name,
+        quantity: item.attributes.quantity,
+        amount: item.attributes.amount,
+        image: item.attributes.products?.data[0].attributes.images?.data[0].attributes.url,
+        id: item.id,
+        actualPrice: item.attributes.products?.data[0].attributes.mrp,
+
+      }))
+
+      return cartItemList;
+    });
+    const deleteCartItem = (id, jwt) => axiosConfig.delete('/user-carts/' + id, {
+      headers: {
+        Authorization: "Bearer " + jwt,
+      },
+    })
+
 export default {
   getCategory,
   getSliders,
@@ -57,4 +75,5 @@ export default {
   signIn,
   addToCart,
   getCartItems,
+  deleteCartItem
 };

@@ -1,6 +1,12 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { CircleUserIcon, LayoutGrid, Search, ShoppingBag, ShoppingBasket } from "lucide-react";
+import {
+  CircleUserIcon,
+  LayoutGrid,
+  Search,
+  ShoppingBag,
+  ShoppingBasket,
+} from "lucide-react";
 import Image from "next/image";
 import React, { useContext, useEffect, useState } from "react";
 import {
@@ -15,28 +21,38 @@ import GlobalApi from "../_utils/GlobalApi";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UpdateCartContext } from "../_context/UpdateCartContext";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import CartItemList from "./CartItemList";
+import { toast } from "sonner";
 
 const Header = () => {
   const [categoriesList, setCategoriesList] = useState([]);
-  const [isLogin, setIsLogin] = useState(false)
-  const [userName, setUserName] = useState()
+  const [isLogin, setIsLogin] = useState(false);
+  const [userName, setUserName] = useState();
+  const [cartItemList, setCartItemList] = useState([]);
 
-  const [userId, setUserId] = useState()
-  const [jwt, setJwt] = useState()
+  const [userId, setUserId] = useState();
+  const [jwt, setJwt] = useState();
 
-  const {updateCart, setUpdateCart} = useContext(UpdateCartContext)
+  const { updateCart, setUpdateCart } = useContext(UpdateCartContext);
 
-  const [totalCartNumber, setTotalCartNumber] = useState(0)
+  const [totalCartNumber, setTotalCartNumber] = useState(0);
 
-  
   const router = useRouter();
 
-  const getCartItems = async () =>{
-    const cartItemList = await GlobalApi.getCartItems(userId, jwt)
-    // console.log(cartItemList)
-    setTotalCartNumber(cartItemList?.length)
-  }
-  
+  const getCartItems = async () => {
+    const cartItemList_ = await GlobalApi.getCartItems(userId, jwt);
+    console.log(cartItemList_);
+    setTotalCartNumber(cartItemList_?.length);
+    setCartItemList(cartItemList_);
+  };
 
   const getCategoryList = () => {
     GlobalApi.getCategory().then((response) => {
@@ -49,21 +65,28 @@ const Header = () => {
     router.push("/");
   };
 
+  const onDeleteItem = (id) => {
+    GlobalApi.deleteCartItem(id, jwt).then((response) => {
+      toast('Item deleted successfully');
+
+      getCartItems();
+    });
+  };
+
   useEffect(() => {
-    setIsLogin(sessionStorage.getItem("jwt")?true:false)
-    setUserName(JSON.parse(sessionStorage.getItem("user")).username)
-    setJwt(sessionStorage.getItem("jwt"))
-    setUserId(JSON.parse(sessionStorage.getItem("user")).id)
+    setIsLogin(sessionStorage.getItem("jwt") ? true : false);
+    setUserName(JSON.parse(sessionStorage.getItem("user")).username);
+    setJwt(sessionStorage.getItem("jwt"));
+    setUserId(JSON.parse(sessionStorage.getItem("user")).id);
     // console.log('username',userName)
     getCategoryList();
   }, []);
 
-
-  useEffect(()=>{
-    if(jwt && userId){
-      getCartItems()
+  useEffect(() => {
+    if (jwt && userId) {
+      getCartItems();
     }
-  },[jwt,userId, updateCart])
+  }, [jwt, userId, updateCart]);
   return (
     <div className="p-5 shadow-sm flex justify-between">
       <div className="flex items-center gap-8">
@@ -108,9 +131,30 @@ const Header = () => {
         </div>
       </div>
       <div className="flex gap-5 items-center">
-        <h2 className="flex gap-2 items-center text-lg">
-          <ShoppingBasket className="h-7 w-7" /> <span className="bg-primary text-white px-2 rounded-full">{totalCartNumber}</span>
-        </h2>
+        <Sheet>
+          <SheetTrigger>
+            <h2 className="flex gap-2 items-center text-lg">
+              <ShoppingBasket className="h-7 w-7" />{" "}
+              <span className="bg-primary text-white px-2 rounded-full">
+                {totalCartNumber}
+              </span>
+            </h2>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle className="bg-primary text-white font-bold text-lg p-2">
+                My Cart
+              </SheetTitle>
+              <SheetDescription>
+                <CartItemList
+                  cartItemList={cartItemList}
+                  onDeleteItem={onDeleteItem}
+                />
+              </SheetDescription>
+            </SheetHeader>
+          </SheetContent>
+        </Sheet>
+
         {!isLogin ? (
           <Link href={"/sign-in"}>
             <Button>Login</Button>

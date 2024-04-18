@@ -16,10 +16,13 @@ const ProductItemDetail = ({ product }) => {
   );
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const {updateCart, setUpdateCart} = useContext(UpdateCartContext)
+  const { updateCart, setUpdateCart } = useContext(UpdateCartContext);
+
   const router = useRouter();
+
   let jwt;
   let user;
+
   if (typeof window !== "undefined") {
     jwt = sessionStorage.getItem("jwt");
     user = JSON.parse(sessionStorage.getItem("user"));
@@ -32,6 +35,7 @@ const ProductItemDetail = ({ product }) => {
       setIsLoading(false);
       return;
     }
+
     const data = {
       data: {
         quantity: quantity,
@@ -41,13 +45,12 @@ const ProductItemDetail = ({ product }) => {
         userId: user.id,
       },
     };
-    console.log("data to load", data);
 
     GlobalApi.addToCart(data, jwt).then(
       (resp) => {
         console.log(resp);
         toast("Add to cart successfully");
-        setUpdateCart(!updateCart)
+        setUpdateCart(!updateCart);
         setIsLoading(false);
       },
       (e) => {
