@@ -5,18 +5,10 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 
 const CartItemList = ({ cartItemList,onDeleteItem }) => {
-    const [subtotal, setSubtotal] = useState(0)
-
-    useEffect(()=>{
-        let total = 0
-        cartItemList.forEach(item => {
-            total += item.amount * item.quantity
-        })
-        setSubtotal(total)
-    },[cartItemList])
+    
   return (
     <div>
-      <div className="">
+      <div className="h-[80%] overflow-auto">
         {cartItemList.map((cart, index) => (
           <div className="flex justify-between items-center p-2 mb-5" key={index}>
             <div className="flex gap-6 items-center">
@@ -37,10 +29,9 @@ const CartItemList = ({ cartItemList,onDeleteItem }) => {
           </div>
         ))}
       </div>
-      <div className="absolute w-[90%] bottom-6 flex flex-col">
-        <h2 className="text-lg font-bold flex justify-between mb-2">Subtotal: <span>${subtotal}</span></h2>
-        <Button>View Cart</Button>
-      </div>
+      
+
+
     </div>
   );
 };

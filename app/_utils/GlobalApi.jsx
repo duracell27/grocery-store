@@ -1,3 +1,5 @@
+
+
 const { default: axios } = require("axios");
 
 const axiosConfig = axios.create({
@@ -40,30 +42,62 @@ const addToCart = (data, jwt) =>
 
 const getCartItems = (userId, jwt) =>
   axiosConfig
-    .get(`/user-carts?filters[userId][$eq]=${userId}&[populate][products][populate][images][populate][0]=url`, {
-      headers: {
-        Authorization: "Bearer " + jwt,
-      },
-    })
+    .get(
+      `/user-carts?filters[userId][$eq]=${userId}&[populate][products][populate][images][populate][0]=url`,
+      {
+        headers: {
+          Authorization: "Bearer " + jwt,
+        },
+      }
+    )
     .then((resp) => {
       const data = resp.data.data;
-      const cartItemList = data.map((item,index)=>({
+      const cartItemList = data.map((item, index) => ({
         name: item.attributes.products?.data[0].attributes.name,
         quantity: item.attributes.quantity,
         amount: item.attributes.amount,
-        image: item.attributes.products?.data[0].attributes.images?.data[0].attributes.url,
+        image:
+          item.attributes.products?.data[0].attributes.images?.data[0]
+            .attributes.url,
         id: item.id,
-        actualPrice: item.attributes.products?.data[0].attributes.mrp,
-
-      }))
+        price: item.attributes.products?.data[0].attributes.mrp,
+        product: item.attributes.products?.data[0].id,
+      }));
 
       return cartItemList;
     });
-    const deleteCartItem = (id, jwt) => axiosConfig.delete('/user-carts/' + id, {
-      headers: {
-        Authorization: "Bearer " + jwt,
-      },
-    })
+
+const deleteCartItem = (id, jwt) =>
+  axiosConfig.delete("/user-carts/" + id, {
+    headers: {
+      Authorization: "Bearer " + jwt,
+    },
+  });
+
+const createOrder = (data, jwt) =>
+  axiosConfig.post("/orders", data, {
+    headers: {
+      Authorization: "Bearer " + jwt,
+    },
+  });
+
+const getOrders = (userId, jwt) =>
+  axiosConfig
+    .get(
+      "/orders?filters[userId][$eq]=2&populate[orderItemList][populate][product][populate][images]=url",
+      { headers: { Authorization: "Bearer " + jwt } }
+    )
+    .then((resp) => {
+      const response = resp.data.data
+      const orderList = response.map((item) =>({
+          id: item.id,
+          totalOrderAmount: item.attributes.totalOrderAmount,
+          paymentId: item.attributes.paymentId,
+          orderItemList: item.attributes.orderItemList,
+          createdAt: item.attributes.createdAt
+      }))
+      return orderList
+    });
 
 export default {
   getCategory,
@@ -75,5 +109,7 @@ export default {
   signIn,
   addToCart,
   getCartItems,
-  deleteCartItem
+  deleteCartItem,
+  createOrder,
+  getOrders
 };

@@ -4,7 +4,6 @@ import {
   CircleUserIcon,
   LayoutGrid,
   Search,
-  ShoppingBag,
   ShoppingBasket,
 } from "lucide-react";
 import Image from "next/image";
@@ -23,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { UpdateCartContext } from "../_context/UpdateCartContext";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -37,15 +37,24 @@ const Header = () => {
   const [isLogin, setIsLogin] = useState(false);
   const [userName, setUserName] = useState();
   const [cartItemList, setCartItemList] = useState([]);
+  const [totalCartNumber, setTotalCartNumber] = useState(0);
 
   const [userId, setUserId] = useState();
   const [jwt, setJwt] = useState();
 
   const { updateCart, setUpdateCart } = useContext(UpdateCartContext);
 
-  const [totalCartNumber, setTotalCartNumber] = useState(0);
-
   const router = useRouter();
+
+  const [subtotal, setSubtotal] = useState(0);
+
+  useEffect(() => {
+    let total = 0;
+    cartItemList.forEach((item) => {
+      total += item.amount * item.quantity;
+    });
+    setSubtotal(total);
+  }, [cartItemList]);
 
   const getCartItems = async () => {
     const cartItemList_ = await GlobalApi.getCartItems(userId, jwt);
@@ -67,7 +76,7 @@ const Header = () => {
 
   const onDeleteItem = (id) => {
     GlobalApi.deleteCartItem(id, jwt).then((response) => {
-      toast('Item deleted successfully');
+      toast("Item deleted successfully");
 
       getCartItems();
     });
@@ -75,12 +84,14 @@ const Header = () => {
 
   useEffect(() => {
     setIsLogin(sessionStorage.getItem("jwt") ? true : false);
-    setUserName(JSON.parse(sessionStorage.getItem("user")).username);
+    if (isLogin) {
+      setUserName(JSON.parse(sessionStorage.getItem("user")).username);
+      setUserId(JSON.parse(sessionStorage.getItem("user")).id);
+    }
     setJwt(sessionStorage.getItem("jwt"));
-    setUserId(JSON.parse(sessionStorage.getItem("user")).id);
     // console.log('username',userName)
     getCategoryList();
-  }, []);
+  }, [isLogin]);
 
   useEffect(() => {
     if (jwt && userId) {
@@ -152,6 +163,18 @@ const Header = () => {
                 />
               </SheetDescription>
             </SheetHeader>
+            <SheetClose asChild>
+              <div className="absolute w-[90%] bottom-6 flex flex-col">
+                <h2 className="text-lg font-bold flex justify-between mb-2">
+                  Subtotal: <span>${subtotal}</span>
+                </h2>
+                <Button
+                  onClick={() => router.push(jwt ? "/checkout" : "/sign-in")}
+                >
+                  Check out
+                </Button>
+              </div>
+            </SheetClose>
           </SheetContent>
         </Sheet>
 
@@ -170,7 +193,9 @@ const Header = () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>My orders</DropdownMenuItem>
+              <Link href={"/my-order"}>
+                <DropdownMenuItem>My orders</DropdownMenuItem>
+              </Link>
               <DropdownMenuItem onClick={onSignOut}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
